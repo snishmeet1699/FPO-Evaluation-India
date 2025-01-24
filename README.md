@@ -6,4 +6,4 @@ There are two code files:
  
 2.	Stata do file (.do file): This file contains the code for running the ‘two-part’ regression models. The analysis was conducted using Stata/SE v 17.0.
 
-The final cleaned data file is available on the Harvard Dataverse: 
+The final cleaned data file is available on the Harvard Dataverse: https://doi.org/10.7910/DVN/QWQRS7
