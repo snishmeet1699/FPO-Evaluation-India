@@ -1,9 +1,9 @@
 
 *************************************
-	* Paper: Association of membership in a farmer producer organization (FPO) with crop diversity, household income, diet diversity, and women's empowerment: A mixed methods study in Uttar Pradesh, India
+	* Paper: Association of membership in a farmer producer organization with crop diversity, household income, diet diversity, and women's empowerment in Uttar Pradesh, India
 	* Objective: Running the two-part regression model on income
 	* Written: Nishmeet Singh
-	* Date: September, 2024			
+	* Date: September 2024			
 	* Version: Stata/SE 17	
 *************************************
 
