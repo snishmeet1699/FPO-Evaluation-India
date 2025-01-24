@@ -1,7 +1,12 @@
+
+###############
+
+  # Paper title: Association of membership in a farmer producer organization with crop diversity, household income, diet diversity, and women’s empowerment in Uttar Pradesh, India
+  # Created date: 29 May 2023
+  # Last update:  19 January 2025
+  # Author: Nishmeet Singh 
   
-  # UP FPO Survey data analysis ####
-  # created date: 29 May 2023
-  # last update:  22 August 2024
+###############  
   
     # Clear R Environment
     rm(list=ls())
@@ -10,25 +15,32 @@
     want = c("tidyverse", "haven", "writexl","readxl","labelled","gtsummary","janitor","magrittr","ggrepel","margins","emmeans","marginaleffects","ggeffects",
              "Hmisc", "ROCR", "gridExtra", "pander", "reshape2", "lazyeval", "moments", "entropy","funModeling","twopartm","flextable","zoo","bstfun")
     have = want %in% rownames(installed.packages())
+    
     # Install the packages that we miss
     if ( any(!have) ) { install.packages( want[!have] ) }
+    
     # Load the packages
     junk <- lapply(want, library, character.only = T)
+    
     # Remove the temporary objects we created
     rm(have, want, junk)
     
-  #  Raw Data Import ####
+    
+    
+#  Raw Data Import ####
     
     #Set Work Directory
-    setwd('/Users/nishmeetsingh/Library/CloudStorage/OneDrive-UniversityofEdinburgh/UP FPO/')
-    #setwd('C:/Users/ljaacks/OneDrive - University of Edinburgh/Anuvaad/FPOs/UP Pilot')
+    #setwd('/Users/nishmeetsingh/Library/CloudStorage/OneDrive-UniversityofEdinburgh/UP FPO/')
+    setwd('C:/Users/ljaacks/OneDrive - University of Edinburgh/Anuvaad/FPOs/UP Pilot')
     
     # Import
     df.raw<-read_xlsx("01 Data/FPO_Sample data set-06th June.xlsx")
   
-  # Data Processing ####
     
-    # rename variables using imported dictionary file
+    
+# Data Processing ####
+    
+    # Rename variables using imported dictionary file
     new_names<-read_xlsx("05 Analysis//Data_quicksummary19062023.xlsx", sheet="Sheet1")
     str(new_names)
   
@@ -46,16 +58,17 @@
     #df.one_hh<-df.clean %>% group_by(a_hhid) %>% mutate(n=n()) %>% filter(n==1) 
     #790 household with 2 respondents and 29 households with only 1 respondent
 
-    ## recoding 'NO' responses from 2 to 0 ####
+    # Recoding 'NO' responses from 2 to 0
     df.clean<-df.clean %>% mutate(across(c(a_sex,fpo_ap_q35,fpo_a_ap_q37_4,fpo_ap_q38,fpo_ap_q39_o1,fpo_ap_q39_o4,fpo_ap_q40,fpo_a_ap_q41_4,fpo_ap_q42,fpo_ap_q43_o2,
                                            he_q2_cult,he_q4_liv,he_q6_othag,he_q8_nonag,he_q10_wage,he_q12_sal,dt_rice:dt_burger), .fns= ~ifelse(.==2,0,ifelse(.==0,0,1))))
-    
     # Change to factor variables
    df.clean %<>% 
       mutate(a_fpo_hh=as.factor(a_fpo_hh))
-     df.clean$a_fpo_hh <-fct_recode(df.clean$a_fpo_hh,"FPO household"="1","Non-FPO household"="2")
+   
+   df.clean$a_fpo_hh <-fct_recode(df.clean$a_fpo_hh,"FPO household"="1","Non-FPO household"="2")
     
-  ## demographics ####
+     
+  ## Demographics ####
     
     # Change to factor variables
     df.demo<- df.clean %>% 
@@ -92,7 +105,7 @@
     table(df.demo$fpohh, df.demo$a_fpo_hh)
     #417 FPO households and 402 control households
     
-  ## agriculture ####  
+  ## Agriculture ####  
     df.agri<- df.clean %>% select(a_hhid,a_fpo_hh,a_resp_id,starts_with("ag_"))
     
   ### land cultivated ####
@@ -362,11 +375,11 @@
     filter(crop_name=="wheat"|crop_name=="paddy") %>% 
     filter(a_hhid %in% df.cropsale$a_hhid) #restricting to only those who sold
     
-    ## income #### 
+    
+    ## Income #### 
     df.income<-df.clean %>% select(a_hhid,a_resp_id,he_q2_cult:he_q14_exp)
     
     # number of income sources and total income- monthly
-    
     df.income %<>%
       mutate(across(
         ends_with("_amt"),
@@ -397,7 +410,7 @@
     )
     
 
-    ## diet diversity ####
+    ## Diet diversity ####
     df.diet<-df.clean %>% select(a_hhid,a_resp_id,dt_rice:dt_burger) %>% 
       mutate(
         fgds = ((rowSums(pick("dt_rice","dt_roti","dt_millet","dt_starch") == 1, na.rm=TRUE) > 0) + 
@@ -417,7 +430,7 @@
     df.diet %<>% mutate(mddw = ifelse(fgds >= 5,1, 
                                         ifelse(fgds < 5, 0, NA)))
     
-    ## merge demographic, agriculture, income and diet data ####
+    ## Merge demographic, agriculture, income and diet data ####
     df.analysis<-left_join(df.demo,df.landown,by=c("a_hhid","a_resp_id"))
     df.analysis<-left_join(df.analysis,df.income,by=c("a_hhid","a_resp_id"))
     df.analysis<-left_join(df.analysis,df.diet,by=c("a_hhid","a_resp_id")) 
@@ -426,6 +439,7 @@
     temp.ag <- distinct(temp.ag)
     df.analysis<-left_join(df.analysis,temp.ag,by=c("a_hhid")) 
     df.analysis<- df.analysis %>% mutate(a_fpo_hh=a_fpo_hh.x)
+    
     
      ## A-WEAI ####
      
@@ -931,6 +945,8 @@
   
      df.analysis<-left_join(df.analysis,df.weai,by=c("a_hhid","a_resp_id"))
      
+     
+     
 # Regression Models ####
     
     # regression datasets
@@ -983,12 +999,6 @@
     
     cd
     
-    theme_gtsummary_compact()
-
-    # Supplemental Table 1
-    save_as_docx(cd,
-                 path = paste0("05 Analysis/raw/","CropDiv_table_",format(Sys.time(),"%d%m%Y"),".docx")) 
-    
     ## income ####
     
     #write Excel for Stata 
@@ -1007,16 +1017,11 @@
       add_global_p() %>% 
       modify_column_unhide(column = std.error) %>% 
       bold_p(t = 0.05) %>% 
-      as_flex_table() %>% 
+      as_flex_table()
       
-    
     mddw1
     
     theme_gtsummary_compact()
-    
-    # Supplemental Table 3
-    save_as_docx(mddw1,
-                 path = paste0("05 Analysis/raw/","MDDW_table_",format(Sys.time(),"%d%m%Y"),".docx")) 
     
     # continuous outcome
     mddw2<- lm(fgds~a_fpo_hh+a_caste+a_educ+ag_land_kh_hc+a_sex,data=df.reg.ind)
@@ -1036,11 +1041,8 @@
     
     theme_gtsummary_compact()
     
-    # Supplemental Table 4
-    save_as_docx(tb.mddw2,
-                 path = paste0("05 Analysis/raw/","MDDWfig_table_",format(Sys.time(),"%d%m%Y"),".docx")) 
-    
-    ## A-WEAI ####    
+
+    ## Women's empowerment (A-WEAI) ####    
     temp.weai<- df.reg.ind %>% filter(a_sex=="Female") 
     
     weai<- glm(empowered_60~a_fpo_hh+a_caste+a_educ+ag_land_kh_hc, data=temp.weai,
@@ -1060,9 +1062,7 @@
     
     theme_gtsummary_compact()
     
-    # Supplemental Table 5
-    save_as_docx(weai,
-                 path = paste0("05 Analysis/raw/","WEAI_table_",format(Sys.time(),"%d%m%Y"),".docx")) 
+
     
 # Table and Figures ####  
     
@@ -1093,6 +1093,7 @@
                   ) %>%
       modify_header(label ~ "****") %>%
       add_overall() %>% 
+      add_n(statistic = "{p_miss}% ({N_miss})") %>%
       as_flex_table() 
 
     dem1
@@ -1110,7 +1111,7 @@
       ungroup()
     
     dem2 <- df.tab2 %>% 
-      dplyr::select(a_fpo_hh,
+      dplyr::select(a_fpo_hh,he_q1_hhmem,
                     land_cat,ag_landown_hc,ag_total_crops,tot_liv_lbl,
                     total_income_mon,
                     he_q2_cult,he_q3_cult_amt_mon,
@@ -1119,7 +1120,7 @@
                     he_q8_nonag,
                     he_all_oth_inc_mon) %>% 
       tbl_summary(by=a_fpo_hh,missing = "no",
-                  digits = all_continuous() ~ 2,
+                  digits = all_continuous() ~ 1,
                   type = list(all_continuous() ~ "continuous",
                               c(he_all_oth_inc_mon) ~"continuous"
                   ),
@@ -1128,6 +1129,7 @@
       ) %>%
       modify_header(label ~ "****") %>%
       add_overall() %>% 
+      add_n(statistic = "{p_miss}% ({N_miss})") %>%
       as_flex_table() 
  
     dem2
@@ -1344,7 +1346,7 @@
     fgds.fig
     dev.off()
     
-    ## Table 3: diet ####
+    ## Table 3 - diet ####
     dqq_fpo<-df.tab %>% select(a_fpo_hh,fgds,mddw,
                                dt_gourd,dt_cuc,dt_greenleaf,
                                dt_pap_ft,dt_ban_ft,dt_grap_ft,
@@ -1411,7 +1413,7 @@
     save_as_docx("Diet by FPO"=dqq_fpo,
                  path = paste0("05 Analysis/raw/","Diet table_",format(Sys.time(),"%d%m%Y"),".docx"))
 
-    ## Table 4: Women's empowerment ####
+    ## Table 4 - women's empowerment ####
     tb.weai<-df.tab %>% filter(a_sex=="Female") %>% 
       select(empowered_60,"feelinginputdecagr", "assetownership",
                       "credjanydec_any","group_binary",
@@ -1429,6 +1431,7 @@
                             "group_binary" ~ "Self-help group membership",
                             "npoor_z105" ~ "Work balance")
                   ) %>% 
+      add_n(statistic = "{p_miss}% ({N_miss})") %>%
       as_flex_table()
     
     tb.weai
@@ -1437,7 +1440,7 @@
                  path = paste0("05 Analysis/raw/","WEAI_table_",format(Sys.time(),"%d%m%Y"),".docx"))
     
     ## FPO advice ####
-    tb.fpo_adv<-df.clean %>% select(a_fpo_hh,fpo_ap_q35,
+    tb.fpo_adv<-df.clean %>% select(a_hhid,a_resp_id,a_fpo_hh,fpo_ap_q35,
                                  fpo_a_ap_q37_1,fpo_a_ap_q37_2,
                                  fpo_a_ap_q36_1,fpo_a_ap_q36_2,fpo_a_ap_q36_3,
                                  fpo_ap_q38,fpo_ap_q39_o1,fpo_ap_q39_o2,
@@ -1485,8 +1488,207 @@
     
     tb.fpo_adv
     
-  # Supplemental Table 6
+    
+# Supplemental files ####
+    
+    ## S1: Summary of missing data
+    
+    names(df.tab)
+    
+    # individual level
+    miss_dem1 <- df.tab %>% 
+      dplyr::select(a_fpo_hh,a_age,a_caste) %>% 
+      tbl_summary(by=a_fpo_hh,missing = "no",
+                  digits = all_continuous() ~ 1,
+                  type = list(all_continuous() ~ "continuous"
+                  ),
+                  statistic = list(all_continuous() ~ c("{mean} ({sd})"),
+                                   all_categorical() ~ c("{p}%, ({n})"))
+      ) %>%
+      modify_header(label ~ "****") %>%
+      add_overall() %>% 
+      add_n(statistic = "{p_miss}% ({N_miss})") %>%
+      modify_column_hide(c("stat_0","stat_1","stat_2"))
+    
+    miss_dem1
+    
+    # household level
+    df.tab2<- df.tab %>% group_by(a_hhid) %>% slice(1) %>% 
+      filter(!(a_sex=="Female")) %>% droplevels() %>%  # There are 10 households were these questions were skipped because they were asked only from males %>% 
+      select(a_fpo_hh,a_hhid,empowered_60,a_sex,
+             he_q1_hhmem,land_cat,ag_landown_hc,ag_total_crops,tot_liv_lbl,ag_land_kh_hc,
+             total_income_mon,
+             he_q2_cult,he_q3_cult_amt_mon,
+             he_q4_liv,he_q5_liv_amt_mon,
+             he_q10_wage,he_q11_wage_amt_mon,
+             he_q8_nonag,
+             he_all_oth_inc_mon,mddw) %>% 
+      ungroup()
+    
+    # Education by Sex
+    df.tab.hh<- df.tab %>% select(a_sex,a_hhid,a_educ) %>% 
+      pivot_wider(names_from = a_sex, values_from = a_educ, names_prefix = "a_educ_") 
+    
+    # Join for educ by male and female
+    df.tab2<-left_join(df.tab2,df.tab.hh,by=c("a_hhid"))
+    
+    miss_dem2 <- df.tab2 %>% 
+      dplyr::select(a_fpo_hh,he_q1_hhmem,a_educ_Male,a_educ_Female,a_sex,
+                    land_cat,ag_landown_hc,ag_total_crops,ag_land_kh_hc,
+                    tot_liv_lbl,
+                    total_income_mon,
+                    he_q2_cult,he_q3_cult_amt_mon,
+                    he_q4_liv,he_q5_liv_amt_mon,
+                    he_q10_wage,he_q11_wage_amt_mon,
+                    he_q8_nonag,
+                    he_all_oth_inc_mon,mddw,empowered_60) %>% 
+      tbl_summary(by=a_fpo_hh,
+                  digits = all_continuous() ~ 1,
+                  type = list(all_continuous() ~ "continuous",
+                              c(he_all_oth_inc_mon) ~"continuous"
+                  ),
+                  statistic = list(all_continuous() ~ c("{mean} ({sd})"),
+                                   all_categorical() ~ c("{p}%, ({n})"))
+      ) %>%
+      add_overall() %>% 
+      #modify_column_hide(c("stat_0","stat_1","stat_2")) %>% 
+      add_n(statistic = "{p_miss}% ({N_miss})")
+
+    miss_dem2
+    
+    # Missing table
+    miss_dem<-tbl_stack(list(miss_dem1, miss_dem2)) %>% 
+      as_gt() %>% 
+        gt::tab_footnote(
+      footnote="Notes: Values are % (n). Women's empowerment was calculated only for women hence 809 missing values for males")
+    
+    miss_dem
+    
+    miss_dem %>% 
+    gtsave(paste0("05 Analysis/raw/","S1_",format(Sys.time(),"%d%m%Y"),".docx"))
+
+    ## S2: FPO and Crop Diversity
+    cd
+    save_as_docx(cd,
+                 path = paste0("05 Analysis/raw/","CropDiv_table_",format(Sys.time(),"%d%m%Y"),".docx")) 
+    
+    # S3: FPO and Income regression table was created in Stata (refer to Stata do-file)
+    
+    ## S4: FPO and diverse diet
+    mddw1
+    save_as_docx(mddw1,
+                 path = paste0("05 Analysis/raw/","MDDW_table_",format(Sys.time(),"%d%m%Y"),".docx")) 
+    
+    ## S5: FPO and diversity score
+    tb.mddw2
+    save_as_docx(tb.mddw2,
+                 path = paste0("05 Analysis/raw/","MDDWfig_table_",format(Sys.time(),"%d%m%Y"),".docx")) 
+    
+    ## S6: FPO, Diet and Caste
+    dqq_fpo_caste<-df.tab %>% select(a_fpo_hh,fgds,mddw,a_caste,
+                               dt_gourd,dt_cuc,dt_greenleaf,
+                               dt_pap_ft,dt_ban_ft,dt_grap_ft,
+                               dt_cheese,dt_curd,dt_milk,dt_fish,
+                               dt_peanut,
+                               dt_cake,dt_sweet,dt_chips,dt_noodles,
+                               dt_snacks,dt_juice,dt_softdrink) %>% 
+      filter(!(is.na(a_caste))) %>% 
+      tbl_strata(strata = a_caste,
+                 ~ .x %>%
+      tbl_summary(by=a_fpo_hh,missing = "no",
+                  digits = all_continuous() ~ 1,
+                  type = list(all_continuous() ~ "continuous",c(fgds) ~ "continuous"
+                  ),
+                  statistic = list(all_continuous() ~ c("{mean} ({sd})"),
+                                   all_categorical() ~ c("{p}% ({n})")),
+                  label = c("mddw" ~ "Diverse diet (minimum dietary diversity score ≥5)",
+                            "fgds" ~ "Minimum dietary diversity score",
+                            "dt_gourd" ~ "Gourds",
+                            "dt_cuc" ~ "Cucumber, capsicum, drumstick",
+                            "dt_greenleaf" ~ "Green Leafs: mustard leaves,spinach,other greens",
+                            "dt_pap_ft" ~ "Papaya, mango",
+                            "dt_ban_ft" ~ "Banana, apple, watermelon",
+                            "dt_grap_ft" ~ "Grapes, peaches, jackfruit",
+                            "dt_cheese" ~ "Paneer",
+                            "dt_curd" ~ "Curd",
+                            "dt_milk" ~ "Milk",
+                            "dt_fish" ~ "Fish",
+                            "dt_peanut" ~ "Peanuts, cashews, almonds, pistachios, walnuts, pumpkin seeds, or sunflower seeds",
+                            "dt_cake" ~ "Cake, biscuits, halwa, jalebi, ladoo",
+                            "dt_sweet" ~ "Other mithai, kulfi, ice cream, shakes",
+                            "dt_chips" ~ "Chips, namkeen",
+                            "dt_noodles" ~ "Maggi noodles, wai wai",
+                            "dt_snacks" ~ "Samosa, pakora, puri, vada",
+                            "dt_juice" ~ "Fruit juice, frooti",
+                            "dt_softdrink" ~ "Cold drinks"
+                  )
+      ) %>%
+      modify_header(all_stat_cols() ~ "{level}\n {n}") %>%
+      bold_labels() %>%
+      add_variable_grouping(
+        "Nutrituous foods" = c("dt_gourd",
+                               "dt_cuc",
+                               "dt_greenleaf",
+                               "dt_pap_ft",
+                               "dt_ban_ft",
+                               "dt_grap_ft",
+                               "dt_cheese",
+                               "dt_curd",
+                               "dt_milk",
+                               "dt_fish",
+                               "dt_peanut"),
+        "Unhealthy foods" = c(
+          "dt_cake",
+          "dt_sweet",
+          "dt_chips",
+          "dt_noodles",
+          "dt_snacks",
+          "dt_juice",
+          "dt_softdrink")
+      )) %>% 
+      as_flex_table()
+    
+    dqq_fpo_caste
+    
+    save_as_docx(dqq_fpo_caste,
+                 path = paste0("05 Analysis/raw/","MDDW_Caste_",format(Sys.time(),"%d%m%Y"),".docx")) 
+    
+    ## S7: FPO and WEAI
+    save_as_docx(weai,
+                 path = paste0("05 Analysis/raw/","WEAI_table_",format(Sys.time(),"%d%m%Y"),".docx")) 
+    
+    ## S8: FPO, Caste, WEAI
+    tb.weai_caste<-df.tab %>% filter(a_sex=="Female") %>% 
+      filter(!(is.na(a_caste))) %>% 
+      select(empowered_60,"feelinginputdecagr", "assetownership",
+             "credjanydec_any","group_binary",
+             "incdec_count","npoor_z105",a_fpo_hh,a_caste) %>% 
+      tbl_strata(strata = a_caste,
+                 ~ .x %>%
+      tbl_summary(by="a_fpo_hh",missing = "no",
+                  type = list(c("feelinginputdecagr", "assetownership",
+                                "credjanydec_any","group_binary",
+                                "incdec_count","npoor_z105") ~ "categorical"),
+                  statistic = all_categorical() ~ c("{p}% ({n})"),
+                  label = c("empowered_60" ~ "Overall women’s empowerment",
+                            "feelinginputdecagr" ~ "Input in productive decisions",
+                            "assetownership" ~ "Ownership of assets",
+                            "credjanydec_any" ~ "Access to and decisions about credit",
+                            "incdec_count" ~ "Control over use of income",
+                            "group_binary" ~ "Self-help group membership",
+                            "npoor_z105" ~ "Work balance")
+      ) 
+      ) %>%
+      as_flex_table()
+    tb.weai_caste
+    
+    save_as_docx(tb.weai_caste,
+                 path = paste0("05 Analysis/raw/","tb.weai_caste_",format(Sys.time(),"%d%m%Y"),".docx"))
+    
+    ## S9: FPO advice
     save_as_docx("FPO_advice"=tb.fpo_adv,
                  path = paste0("05 Analysis/raw/","FPO_advice_",format(Sys.time(),"%d%m%Y"),".docx"))
-    
-    # End of code ####   
+
+
+
+# End of code ####   
