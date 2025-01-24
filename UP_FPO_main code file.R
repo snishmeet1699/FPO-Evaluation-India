@@ -30,8 +30,7 @@
 #  Raw Data Import ####
     
     #Set Work Directory
-    #setwd('/Users/nishmeetsingh/Library/CloudStorage/OneDrive-UniversityofEdinburgh/UP FPO/')
-    setwd('C:/Users/ljaacks/OneDrive - University of Edinburgh/Anuvaad/FPOs/UP Pilot')
+    setwd('@update with path')
     
     # Import
     df.raw<-read_xlsx("01 Data/FPO_Sample data set-06th June.xlsx")
